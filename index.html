@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Property Calculator V5.1</title>
+
+<style>
+body { font-family: Arial; background:#eef3f9; padding:20px; }
+.container { max-width:900px; margin:auto; background:white; padding:20px; border-radius:15px; }
+h1 { margin-bottom:5px; }
+.small { color:gray; font-size:12px; margin-bottom:20px; }
+
+label { font-weight:600; display:block; margin-top:12px; }
+input, select { width:100%; padding:10px; margin-top:4px; }
+
+button { width:100%; padding:14px; background:#2563eb; color:white; border:none; margin-top:20px; }
+
+.section { margin-top:20px; padding:15px; background:#f9fafb; border-radius:10px; }
+
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+.box { background:white; padding:10px; border-radius:8px; border:1px solid #e5e7eb; }
+
+h3 { margin-top:0; }
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Property Decision Calculator</h1>
+<div class="small">Version 5.1 – Full Model + Tax</div>
+
+<label>New Price</label>
+<input id="newPrice" value="2500000">
+
+<label>Resale Price</label>
+<input id="resalePrice" value="2000000">
+
+<label>New Growth %</label>
+<input id="newGrowth" value="2.5">
+
+<label>Resale Growth %</label>
+<input id="resaleGrowth" value="3.5">
+
+<label>Years</label>
+<input id="years" value="10">
+
+<label>Loan %</label>
+<input id="loan" value="75">
+
+<label>Interest %</label>
+<input id="interest" value="2">
+
+<label>Monthly Rent (New)</label>
+<input id="newRent" value="7500">
+
+<label>Monthly Rent (Resale)</label>
+<input id="resaleRent" value="7500">
+
+<label>New Occupancy</label>
+<select id="newType">
+<option value="owner">Owner Occupied</option>
+<option value="invest">Investment</option>
+</select>
+
+<label>Resale Occupancy</label>
+<select id="resaleType">
+<option value="invest">Investment</option>
+<option value="owner">Owner Occupied</option>
+</select>
+
+<label>MCST Monthly (New)</label>
+<input id="newMcst" value="350">
+
+<label>MCST Monthly (Resale)</label>
+<input id="resaleMcst" value="500">
+
+<label>Build Years (New)</label>
+<input id="buildYears" value="4">
+
+<label>Renovation (Resale)</label>
+<input id="reno" value="30000">
+
+<label>Extra Cash Return %</label>
+<input id="extraReturn" value="5">
+
+<button onclick="calc()">Generate Report</button>
+
+<div id="result"></div>
+
+</div>
+
+<script>
+
+function money(x){ return "$" + Math.round(x).toLocaleString(); }
+
+// Tax function (tiered)
+function taxFromAV(av, type){
+
+let tax = 0;
+
+if(type === "owner"){
+  if(av <= 30000) tax = 0;
+  else if(av <= 60000) tax = (av-30000)*0.04;
+  else tax = (30000*0.04) + (av-60000)*0.06;
+}
+
+if(type === "invest"){
+  if(av <= 30000) tax = av*0.10;
+  else if(av <= 60000) tax = (30000*0.10) + (av-30000)*0.12;
+  else tax = (30000*0.10) + (30000*0.12) + (av-60000)*0.14;
+}
+
+return tax;
+}
+
+function calc(){
+
+let NP = Number(newPrice.value);
+let RP = Number(resalePrice.value);
+let NG = Number(newGrowth.value)/100;
+let RG = Number(resaleGrowth.value)/100;
+let t = Number(years.value);
+let loan = Number(loan.value)/100;
+let i = Number(interest.value)/100;
+
+let newRent = Number(newRent.value)*12;
+let resaleRent = Number(resaleRent.value)*12;
+
+let newType = document.getElementById("newType").value;
+let resaleType = document.getElementById("resaleType").value;
+
+let newMcst = Number(newMcst.value)*12;
+let resaleMcst = Number(resaleMcst.value)*12;
+
+let build = Number(buildYears.value);
+let reno = Number(reno.value);
+let extraReturn = Number(extraReturn.value)/100;
+
+// AV
+let newAV = newRent;
+let resaleAV = resaleRent;
+
+// Tax
+let newTax = taxFromAV(newAV, newType);
+let resaleTax = taxFromAV(resaleAV, resaleType);
+
+// Future values
+let newFV = NP*Math.pow(1+NG,t);
+let resaleFV = RP*Math.pow(1+RG,t);
+
+let newGain = newFV-NP;
+let resaleGain = resaleFV-RP;
+
+// Interest
+let newInterest = NP*loan*i*t*0.6;
+let resaleInterest = RP*loan*i*t;
+
+// Rental
+let newRentYears = Math.max(0, t-build);
+let newRentTotal = newRent*newRentYears;
+let resaleRentTotal = resaleRent*t;
+
+// Costs
+let newCost = newMcst*newRentYears + newTax*t;
+let resaleCost = resaleMcst*t + resaleTax*t + reno;
+
+// Extra cash
+let extraCash = NP-RP;
+let extraFuture = extraCash*Math.pow(1+extraReturn,t);
+let extraGain = extraFuture-extraCash;
+
+// Totals
+let newTotal = newGain + newRentTotal - newInterest - newCost;
+let resaleTotal = resaleGain + resaleRentTotal - resaleInterest - resaleCost + extraGain;
+
+// Cash invested
+let newCashInvested = NP*(1-loan) + newInterest + newCost;
+let resaleCashInvested = RP*(1-loan) + resaleInterest + resaleCost;
+
+// Cash end
+let newCashEnd = newFV - (NP*loan);
+let resaleCashEnd = resaleFV - (RP*loan) + extraFuture;
+
+// ROI
+let newROI = newTotal/newCashInvested;
+let resaleROI = resaleTotal/resaleCashInvested;
+
+let winner = resaleTotal>newTotal ? "RESALE WINS" : "NEW WINS";
+
+result.innerHTML = `
+
+<div class="section">
+<h3>🏆 ${winner}</h3>
+Difference: ${money(Math.abs(resaleTotal-newTotal))}
+</div>
+
+<div class="section">
+<h3>📦 Capital & Profit</h3>
+<div class="grid">
+<div class="box">New Gain<br>${money(newGain)}</div>
+<div class="box">Resale Gain<br>${money(resaleGain)}</div>
+<div class="box">New Total<br>${money(newTotal)}</div>
+<div class="box">Resale Total<br>${money(resaleTotal)}</div>
+</div>
+</div>
+
+<div class="section">
+<h3>📦 Holding Cost</h3>
+<div class="grid">
+<div class="box">New Cost<br>${money(newCost + newInterest)}</div>
+<div class="box">Resale Cost<br>${money(resaleCost + resaleInterest)}</div>
+</div>
+</div>
+
+<div class="section">
+<h3>📦 Rental</h3>
+<div class="grid">
+<div class="box">New Rental<br>${money(newRentTotal)}</div>
+<div class="box">Resale Rental<br>${money(resaleRentTotal)}</div>
+</div>
+</div>
+
+<div class="section">
+<h3>📦 Extra Cash</h3>
+Extra Gain: ${money(extraGain)}
+</div>
+
+<div class="section">
+<h3>📦 Cash Position</h3>
+<div class="grid">
+<div class="box">New Cash Invested<br>${money(newCashInvested)}</div>
+<div class="box">Resale Cash Invested<br>${money(resaleCashInvested)}</div>
+
+<div class="box">New Cash End<br>${money(newCashEnd)}</div>
+<div class="box">Resale Cash End<br>${money(resaleCashEnd)}</div>
+</div>
+</div>
+
+<div class="section">
+<h3>📦 ROI</h3>
+<div class="grid">
+<div class="box">New ROI<br>${(newROI*100).toFixed(1)}%</div>
+<div class="box">Resale ROI<br>${(resaleROI*100).toFixed(1)}%</div>
+
+<div class="box">New ROI/Year<br>${(newROI/t*100).toFixed(1)}%</div>
+<div class="box">Resale ROI/Year<br>${(resaleROI/t*100).toFixed(1)}%</div>
+</div>
+</div>
+
+`;
+
+}
+
+</script>
+
+</body>
+</html>
