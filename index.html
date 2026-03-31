@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Property Decision Calculator V4.1</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background: #eef3f9;
+}
+.container {
+  max-width: 760px;
+  margin: auto;
+  background: white;
+  padding: 22px;
+  border-radius: 18px;
+}
+h1 {
+  margin-bottom: 6px;
+}
+.small {
+  color: gray;
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+label {
+  display: block;
+  font-weight: 600;
+  margin-top: 14px;
+  margin-bottom: 6px;
+}
+input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+button {
+  width: 100%;
+  padding: 14px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  margin-top: 20px;
+  border-radius: 10px;
+  font-size: 16px;
+}
+.result {
+  margin-top: 24px;
+  padding: 18px;
+  background: #f8fafc;
+  border-radius: 12px;
+  line-height: 1.6;
+}
+.box {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>Property Decision Calculator</h1>
+  <div class="small">Version 4.1 – Balanced Model (Labeled)</div>
+
+  <label for="newPrice">New Property Price</label>
+  <input id="newPrice" type="number" value="2500000">
+
+  <label for="resalePrice">Resale Property Price</label>
+  <input id="resalePrice" type="number" value="2000000">
+
+  <label for="newGrowth">New Property Annual Growth %</label>
+  <input id="newGrowth" type="number" step="0.1" value="2.5">
+
+  <label for="resaleGrowth">Resale Property Annual Growth %</label>
+  <input id="resaleGrowth" type="number" step="0.1" value="3.5">
+
+  <label for="years">Holding Period (Years)</label>
+  <input id="years" type="number" value="10">
+
+  <label for="interestRate">Interest Rate %</label>
+  <input id="interestRate" type="number" step="0.1" value="2">
+
+  <label for="loanPct">Loan %</label>
+  <input id="loanPct" type="number" step="0.1" value="75">
+
+  <label for="monthlyRent">Monthly Rent</label>
+  <input id="monthlyRent" type="number" value="7500">
+
+  <label for="newMcst">New Property MCST / Month</label>
+  <input id="newMcst" type="number" value="350">
+
+  <label for="resaleMcst">Resale Property MCST / Month</label>
+  <input id="resaleMcst" type="number" value="500">
+
+  <label for="newTax">New Property Annual Tax</label>
+  <input id="newTax" type="number" value="6000">
+
+  <label for="resaleTax">Resale Property Annual Tax</label>
+  <input id="resaleTax" type="number" value="8000">
+
+  <label for="reno">Resale Renovation Cost</label>
+  <input id="reno" type="number" value="30000">
+
+  <label for="buildYears">New Launch Build Years</label>
+  <input id="buildYears" type="number" value="4">
+
+  <label for="extraReturn">Return On Extra Cash Saved By Buying Resale %</label>
+  <input id="extraReturn" type="number" step="0.1" value="5">
+
+  <button onclick="calc()">Generate Report</button>
+
+  <div class="result" id="result">Press “Generate Report” to see the analysis.</div>
+</div>
+
+<script>
+function money(x) {
+  return "$" + Math.round(x).toLocaleString();
+}
+
+function calc() {
+  const NP = Number(document.getElementById("newPrice").value);
+  const RP = Number(document.getElementById("resalePrice").value);
+  const NG = Number(document.getElementById("newGrowth").value) / 100;
+  const RG = Number(document.getElementById("resaleGrowth").value) / 100;
+  const years = Number(document.getElementById("years").value);
+  const interestRate = Number(document.getElementById("interestRate").value) / 100;
+  const loanPct = Number(document.getElementById("loanPct").value) / 100;
+  const monthlyRent = Number(document.getElementById("monthlyRent").value);
+  const newMcstMonthly = Number(document.getElementById("newMcst").value);
+  const resaleMcstMonthly = Number(document.getElementById("resaleMcst").value);
+  const newTaxAnnual = Number(document.getElementById("newTax").value);
+  const resaleTaxAnnual = Number(document.getElementById("resaleTax").value);
+  const reno = Number(document.getElementById("reno").value);
+  const buildYears = Number(document.getElementById("buildYears").value);
+  const extraReturn = Number(document.getElementById("extraReturn").value) / 100;
+
+  const annualRent = monthlyRent * 12;
+
+  const newFutureValue = NP * Math.pow(1 + NG, years);
+  const resaleFutureValue = RP * Math.pow(1 + RG, years);
+
+  const newCapitalGain = newFutureValue - NP;
+  const resaleCapitalGain = resaleFutureValue - RP;
+
+  const newLoanAmount = NP * loanPct;
+  const resaleLoanAmount = RP * loanPct;
+
+  const progressiveFactor = years <= 5 ? 0.5 : 0.7;
+  const newInterestCost = newLoanAmount * interestRate * years * progressiveFactor;
+  const resaleInterestCost = resaleLoanAmount * interestRate * years;
+
+  const newRentYears = Math.max(0, years - buildYears);
+  const newRentalIncome = annualRent * newRentYears;
+  const resaleRentalIncome = annualRent * years;
+
+  const newMcstCost = newMcstMonthly * 12 * newRentYears;
+  const resaleMcstCost = resaleMcstMonthly * 12 * years;
+
+  const newTaxCost = newTaxAnnual * years;
+  const resaleTaxCost = resaleTaxAnnual * years;
+
+  const extraCash = NP - RP;
+  const extraCashFuture = extraCash * Math.pow(1 + extraReturn, years);
+  const extraCashGain = extraCashFuture - extraCash;
+
+  const newTotal =
+    newCapitalGain +
+    newRentalIncome -
+    newInterestCost -
+    newMcstCost -
+    newTaxCost;
+
+  const resaleTotal =
+    resaleCapitalGain +
+    resaleRentalIncome -
+    resaleInterestCost -
+    resaleMcstCost -
+    resaleTaxCost -
+    reno +
+    extraCashGain;
+
+  const difference = resaleTotal - newTotal;
+  const winner = difference > 0 ? "RESALE WINS" : "NEW WINS";
+
+  document.getElementById("result").innerHTML = `
+    <h3>Version 4.1 Report</h3>
+
+    <div class="box">
+      <b>Winner:</b> ${winner}<br>
+      <b>Difference:</b> ${money(Math.abs(difference))}
+    </div>
+
+    <div class="box">
+      <b>New Total Profit:</b> ${money(newTotal)}<br>
+      <b>Resale Total Profit:</b> ${money(resaleTotal)}
+    </div>
+
+    <div class="box">
+      <b>New Capital Gain:</b> ${money(newCapitalGain)}<br>
+      <b>Resale Capital Gain:</b> ${money(resaleCapitalGain)}<br>
+      <b>New Rental Income:</b> ${money(newRentalIncome)}<br>
+      <b>Resale Rental Income:</b> ${money(resaleRentalIncome)}
+    </div>
+
+    <div class="box">
+      <b>New Interest Cost:</b> ${money(newInterestCost)}<br>
+      <b>Resale Interest Cost:</b> ${money(resaleInterestCost)}<br>
+      <b>New MCST Cost:</b> ${money(newMcstCost)}<br>
+      <b>Resale MCST Cost:</b> ${money(resaleMcstCost)}<br>
+      <b>New Tax Cost:</b> ${money(newTaxCost)}<br>
+      <b>Resale Tax Cost:</b> ${money(resaleTaxCost)}<br>
+      <b>Resale Renovation:</b> ${money(reno)}
+    </div>
+
+    <div class="box">
+      <b>Extra Cash Saved By Buying Resale:</b> ${money(extraCash)}<br>
+      <b>Extra Cash Investment Gain:</b> ${money(extraCashGain)}
+    </div>
+
+    <div class="box">
+      <b>Insight:</b><br>
+      ${winner === "RESALE WINS"
+        ? "Resale is ahead because it starts rental income immediately, has higher assumed resale growth, and benefits from investing the extra cash saved."
+        : "New is ahead because the assumed new-launch growth and lower early financing drag outweigh the rental and cash-savings advantage of resale."}
+    </div>
+  `;
+}
+</script>
+
+</body>
+</html>
