@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Property Decision Calculator V4</title>
+
+<style>
+body { font-family: Arial; padding:20px; background:#eef3f9; }
+.container { max-width:700px; margin:auto; background:white; padding:20px; border-radius:15px; }
+input { width:100%; padding:10px; margin:6px 0; }
+button { width:100%; padding:14px; background:#2563eb; color:white; border:none; margin-top:10px; }
+.result { margin-top:20px; }
+h2 { margin-bottom:5px; }
+.small { color:gray; font-size:12px; }
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Property Decision Calculator</h2>
+<div class="small">Version 4.0 – Balanced Model</div>
+
+<input id="newPrice" placeholder="New Price" value="2500000">
+<input id="resalePrice" placeholder="Resale Price" value="2000000">
+
+<input id="newGrowth" placeholder="New Growth %" value="2.5">
+<input id="resaleGrowth" placeholder="Resale Growth %" value="3.5">
+
+<input id="years" placeholder="Holding Years" value="10">
+
+<input id="interest" placeholder="Interest %" value="2">
+<input id="loan" placeholder="Loan %" value="75">
+
+<input id="rent" placeholder="Monthly Rent" value="7500">
+
+<input id="newMcst" placeholder="New MCST monthly" value="350">
+<input id="resaleMcst" placeholder="Resale MCST monthly" value="500">
+
+<input id="newTax" placeholder="New annual tax" value="6000">
+<input id="resaleTax" placeholder="Resale annual tax" value="8000">
+
+<input id="reno" placeholder="Resale renovation" value="30000">
+
+<input id="buildYears" placeholder="Build years (new)" value="4">
+
+<input id="extraReturn" placeholder="Return on extra cash %" value="5">
+
+<button onclick="calc()">Generate Report</button>
+
+<div class="result" id="result"></div>
+
+</div>
+
+<script>
+function calc(){
+
+let NP = Number(newPrice.value);
+let RP = Number(resalePrice.value);
+let NG = Number(newGrowth.value)/100;
+let RG = Number(resaleGrowth.value)/100;
+let t = Number(years.value);
+let i = Number(interest.value)/100;
+let loan = Number(loan.value)/100;
+let rent = Number(rent.value)*12;
+
+let newMcst = Number(newMcst.value)*12;
+let resaleMcst = Number(resaleMcst.value)*12;
+
+let newTax = Number(newTax.value);
+let resaleTax = Number(resaleTax.value);
+
+let reno = Number(reno.value);
+let build = Number(buildYears.value);
+let extraReturn = Number(extraReturn.value)/100;
+
+// FUTURE VALUES
+let newFV = NP * Math.pow(1+NG,t);
+let resaleFV = RP * Math.pow(1+RG,t);
+
+let newGain = newFV - NP;
+let resaleGain = resaleFV - RP;
+
+// INTEREST
+let newInterest = NP*loan*i*t*0.6;
+let resaleInterest = RP*loan*i*t;
+
+// RENTAL
+let newRentYears = Math.max(0, t - build);
+let newRent = rent * newRentYears;
+let resaleRent = rent * t;
+
+// COSTS
+let newCost = newMcst*newRentYears + newTax*t;
+let resaleCost = resaleMcst*t + resaleTax*t + reno;
+
+// EXTRA CASH INVESTMENT
+let extraCash = NP - RP;
+let extraFuture = extraCash * Math.pow(1+extraReturn,t);
+let extraGain = extraFuture - extraCash;
+
+// TOTAL
+let newTotal = newGain + newRent - newInterest - newCost;
+let resaleTotal = resaleGain + resaleRent - resaleInterest - resaleCost + extraGain;
+
+let diff = resaleTotal - newTotal;
+
+let winner = diff > 0 ? "RESALE WINS" : "NEW WINS";
+
+result.innerHTML = `
+<h3>📊 Version 4 Report</h3>
+
+<b>Winner:</b> ${winner}<br>
+<b>Difference:</b> $${Math.round(Math.abs(diff))}<br><br>
+
+<b>New Total:</b> $${Math.round(newTotal)}<br>
+<b>Resale Total:</b> $${Math.round(resaleTotal)}<br><br>
+
+<b>Extra Cash Gain (Resale):</b> $${Math.round(extraGain)}<br><br>
+
+<b>Insight:</b><br>
+${winner.includes("RESALE") 
+? "Resale wins due to rental income + reinvested cash advantage."
+: "New wins due to lower early cost and sufficient capital growth."}
+
+`;
+}
+</script>
+
+</body>
+</html>
