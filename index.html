@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Property Calculator</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{font-family:Arial;padding:20px;background:#f5f7fb}
+.card{background:#fff;padding:20px;border-radius:12px;margin-bottom:20px}
+h2{margin-top:0}
+table{width:100%;border-collapse:collapse}
+td{padding:8px;border-bottom:1px solid #eee}
+strong{font-weight:700}
+.good{color:green;font-weight:bold}
+.warn{color:orange;font-weight:bold}
+.bad{color:red;font-weight:bold}
+input,select{margin-bottom:10px;width:100%;padding:6px}
+button{padding:10px;width:100%;background:#2563eb;color:#fff;border:none;border-radius:6px}
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+<h2>Inputs</h2>
+
+Years <input id="years" value="5">
+Build Years <input id="buildYears" value="3">
+Loan % <input id="loanPct" value="75">
+Interest % <input id="interestRate" value="2">
+
+<h3>New</h3>
+Price <input id="newPrice" value="2500000">
+Growth % <input id="newGrowth" value="3">
+Rent <input id="newMarketRent" value="7500">
+<select id="newType">
+<option value="owner">Owner</option>
+<option value="invest">Invest</option>
+</select>
+
+<h3>Resale</h3>
+Price <input id="resalePrice" value="2000000">
+Growth % <input id="resaleGrowth" value="3.5">
+Rent <input id="resaleMarketRent" value="7500">
+<select id="resaleType">
+<option value="owner">Owner</option>
+<option value="invest">Invest</option>
+</select>
+
+<button onclick="calc()">Calculate</button>
+</div>
+
+<div class="card">
+<h2>Result</h2>
+
+<table>
+<tr><td>New Profit</td><td id="newProfit"></td></tr>
+<tr><td>Resale Profit</td><td id="resaleProfit"></td></tr>
+
+<tr><td>Break-even New</td><td id="newBreak"></td></tr>
+<tr><td>Break-even Resale</td><td id="resaleBreak"></td></tr>
+
+<tr><td>Margin New</td><td id="newMargin"></td></tr>
+<tr><td>Margin Resale</td><td id="resaleMargin"></td></tr>
+
+<tr><td>Risk New</td><td id="newRisk"></td></tr>
+<tr><td>Risk Resale</td><td id="resaleRisk"></td></tr>
+</table>
+
+</div>
+
+<script>
+
+function v(id){ return Number(document.getElementById(id).value) }
+function s(id){ return document.getElementById(id).value }
+function money(x){ return "$"+Math.round(x).toLocaleString() }
+function pct(x){ return (x*100).toFixed(2)+"%" }
+
+function getRisk(m){
+ if(m>0.01) return ["Safe Entry","good"]
+ if(m>0) return ["Moderate","warn"]
+ return ["High Risk","bad"]
+}
+
+function calc(){
+
+let years=v("years")
+let build=v("buildYears")
+
+let newP=v("newPrice")
+let newG=v("newGrowth")/100
+let newRent=v("newMarketRent")*12
+let newType=s("newType")
+
+let resP=v("resalePrice")
+let resG=v("resaleGrowth")/100
+let resRent=v("resaleMarketRent")*12
+let resType=s("resaleType")
+
+// future value
+let newFV=newP*Math.pow(1+newG,years)
+let resFV=resP*Math.pow(1+resG,years)
+
+// capital gain
+let newGain=newFV-newP
+let resGain=resFV-resP
+
+// simple holding cost (safe estimate)
+let newHolding=newP*0.10
+let resHolding=resP*0.12
+
+// extra cash advantage resale
+let extra=resP<newP?(newP-resP)*1.3:0
+
+// profit logic
+let newProfit=newType=="invest"
+ ? newGain-newHolding+newRent
+ : newGain-newHolding
+
+let resProfit=resType=="invest"
+ ? resGain-resHolding+resRent+extra
+ : resGain-resHolding+extra
+
+// break-even
+let newBreak=Math.pow((newP+newHolding-newRent)/newP,1/years)-1
+let resBreak=Math.pow((resP+resHolding-resRent-extra)/resP,1/years)-1
+
+// margin
+let newMargin=newG-newBreak
+let resMargin=resG-resBreak
+
+// risk
+let nr=getRisk(newMargin)
+let rr=getRisk(resMargin)
+
+// output
+document.getElementById("newProfit").innerHTML=money(newProfit)
+document.getElementById("resaleProfit").innerHTML=money(resProfit)
+
+document.getElementById("newBreak").innerHTML=pct(newBreak)
+document.getElementById("resaleBreak").innerHTML=pct(resBreak)
+
+document.getElementById("newMargin").innerHTML=pct(newMargin)
+document.getElementById("resaleMargin").innerHTML=pct(resMargin)
+
+document.getElementById("newRisk").innerHTML="<span class='"+nr[1]+"'>"+nr[0]+"</span>"
+document.getElementById("resaleRisk").innerHTML="<span class='"+rr[1]+"'>"+rr[0]+"</span>"
+
+}
+
+</script>
+
+</body>
+</html>
